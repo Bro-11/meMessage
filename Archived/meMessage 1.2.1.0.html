@@ -1,0 +1,488 @@
+
+<center>
+    <h1 id="title">
+      Loading...
+    </h1>
+  </center>
+  <div id="messages"></div>
+  <div id="chats">
+    
+  </div>
+  <input id="type" type="text" placeholder="new meMessage..." />
+  <button id="sendBtn" onclick="send()">&#x1f871;</button>
+  <button id="nameBtn" onclick="changeName()">Change Chat Name</button><script>//var numfrUrl = prompt("enter chatroom...\n\n1 is gc with riley and joey\n2 is tudor\n3 is allan\n4 is coker")
+  var url = `https://retoolapi.dev/09OX6R/messages/8`;
+var max=0;
+if (!localStorage.meMsgUser) {
+  localStorage.meMsgUser=prompt("Enter your first name...  (This is your display username, you cannot change it once it is set!)");
+}
+var username = "Jacob"//localStorage.meMsgUser;
+var passes;
+
+var chatDiv = document.querySelector("#chats")
+setTimeout(e=>{for (var i = 1;i <= 149;i++) {
+let enterChatBtn = document.createElement("button");
+enterChatBtn.setAttribute("number",i)
+enterChatBtn.onclick=e=>{
+  promptEntering(e.target.getAttribute("number"))
+}
+enterChatBtn.classList.add("chatbtn");
+enterChatBtn.innerText = passes.names.toString().split(",")[i-1];
+
+chatDiv.appendChild(enterChatBtn);
+}},1300)
+
+
+var msg = { messages: {} }
+var O = {}
+async function api(changeType="get", change={}) {
+if (changeType == "put") {
+  await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(change)
+    })
+  .then(response => response.json())
+  .then(data => o = data)
+} else if (changeType == "get") {
+  await fetch(url,{method:"GET"}).then(r=>r.json()).then(d=>o=d)
+  O=o
+
+}
+if (changeType == "add") {
+  O = addMessage(change)
+  api("put",O)
+  window.scrollTo({ 
+  top: document.body.scrollHeight, 
+  behavior: "smooth" 
+  })
+}
+msg = o
+}
+
+// CHAT, Tudor, AJB, Coker
+
+async function updatePasses() {
+await fetch("https://retoolapi.dev/09OX6R/messages/150",{method:"GET"}).then(r=>r.json()).then(d=>passes=d)
+passes=passes
+}
+
+
+function promptEntering(num) {
+//localStorage["enteredChat"+num]="yes"
+if (localStorage["enteredChat"+num]!=="yes") {
+let pasio = passes.passwords.toString().split(",")[num-1];
+let pass;
+if (!pasio=="") {pass = btoa(prompt("Enter password..."));} else {pass=""}
+if (pasio==pass) {
+  url="https://retoolapi.dev/09OX6R/messages/"+num;
+  localStorage["enteredChat"+num]="yes"
+}
+console.log(passes[num-1], num-1)
+console.log(pass)
+} else {
+  url="https://retoolapi.dev/09OX6R/messages/"+num;
+}
+}
+
+function addMessage(newMessage, targetObject = msg) {
+    // === FIX STARTS HERE: Use targetObject or default to a safe structure ===
+    if (typeof targetObject !== 'object' || targetObject === null || !targetObject.messages) {
+        // If the expected targetObject is invalid, log an error and return an empty, valid structure
+        console.error("Target object for adding message is invalid, returning default structure.");
+        targetObject = { messages: {} };
+    }
+    // === FIX ENDS HERE ===
+    
+    const messages = targetObject.messages;
+    const existingKeys = Object.keys(messages); // <-- Now safe!
+    
+    let maxIndex = 0;
+    for (const key of existingKeys) {
+        const index = parseInt(key.substring(1));
+        if (index > maxIndex) {
+            maxIndex = index;
+        }
+    }
+    const newKey = `m${maxIndex + 1}`;
+    
+    // Ensure 'messages' itself is a valid object before spreading
+    const currentMessages = typeof targetObject.messages === 'object' && targetObject.messages !== null 
+        ? targetObject.messages 
+        : {};
+
+    const newMessages = { 
+        ...currentMessages, 
+        [newKey]: newMessage  
+    };
+    
+    return {  
+        ...targetObject,  
+        messages: newMessages  
+    };
+}
+
+const updatedMessages = {
+messages: {
+  m1: {
+    sender: {
+      user: "Server",
+      time: "0:00 AM"
+    },
+    message: "Chat reset by server admin"
+  }
+}
+};
+
+async function reset() {
+await api("put",updatedMessages)
+}
+
+async function resetAll() {
+  for (var i = 123;i < 150;i++) {
+    url = "https://retoolapi.dev/09OX6R/messages/"+i
+    await reset()
+  }
+}
+
+function getTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, '0'); 
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12; 
+    return `${displayHours}:${minutes} ${ampm}`;
+}
+
+function send() {
+if (document.querySelector("input").value=="") {} else {
+  api("add",{sender: {user: [username], time: [getTime()]},message: [document.querySelector("input").value]});
+  document.querySelector("input").value=""
+  setTimeout(() => { window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth"
+  });
+}, 1100)
+}
+}
+
+document.onkeydown=e=>{if (e.key=="Enter") {send()}}
+var m;
+fetch("https://retoolapi.dev/09OX6R/messages/1",{method:"GET"}).then(r=>r.json()).then(d=>m=d.messages)
+
+fetch(url).then(r=>r.json()).then(d=>max=Object.keys(d.messages).length);
+
+
+function changeName() {
+let num = Number(url.split("messages/")[1]);
+let newName = prompt("enter new name");
+let newPasses = passes.names.toString().split(",");
+newPasses[num-1]=newName
+console.log(newPasses)
+let new150 = {
+  names: [newPasses],
+  passwords: [passes.passwords]
+}
+console.log(new150)
+let preUrl=url;
+url="https://retoolapi.dev/09OX6R/messages/150";
+api("put",new150);
+url=preUrl;
+}
+
+
+function edit(messageIndex, editType, editData) {
+  let messageToEdit = msg.messages["m"+messageIndex];
+  if (editType == "all") {
+    messageToEdit = editData;
+  }
+  if (editType == "message") {
+    messageToEdit.message = editData;
+  }
+  if (editType == "time") {
+    messageToEdit.sender.time = editData;
+  }
+  if (editType == "user") {
+    messageToEdit.sender.user = editData;
+  }
+  if (editType == "reactions") {
+    messageToEdit.reactions = editData;
+  }
+  msg.messages["m"+messageIndex] = messageToEdit;
+  api("put",msg);
+}
+
+
+function updateTexts() {
+    if (!msg || !msg.messages) {
+        // If the data hasn't loaded yet, just exit the function.
+        return;
+    }
+    let scrollWhy = window.scrollY;
+    
+let chatNum = parseInt(url.split("messages/")[1]);
+let chatDiv = document.getElementById("chats");
+document.querySelector("h1").innerText = chatDiv.querySelectorAll("button")[chatNum-1].innerText;
+
+document.querySelector("#messages").innerHTML="";
+for (var i = 0;i < Object.keys(msg.messages).length;i++) {
+  let bubble = document.createElement("div");
+  bubble.____MID=i+1
+  let sender = msg.messages["m"+(i+1)]
+  bubble.style = `
+    position: absolute;
+    top: ${70*i+90}px;
+    ${sender.sender.user==username?("right: 50px;"):"left: 130px;"}
+    background: ${sender.sender.user==username?("#1584ff"):"#262529"};
+    color: white;
+    height: 40px;
+    border: 1px solid black;
+    display: inline-block;
+    min-width: 35px;
+    max-width: 75%;
+    overflow-wrap: break-word;
+    cursor: default;
+  `
+  bubble.oncontextmenu = _thisBubble => {
+    var reactUi = document.createElement("div");
+    reactUi.style = `
+      position: fixed;
+      bottom: 20px;
+      height: 40px;
+      left: 140px;
+      width: calc(100% - 225px);
+      border-radius: 12px;
+      background: #262529;
+      border: 1px solid #7c7c7c;
+      color: white;
+      z-index: 1000;
+      padding-left: 8px;
+    `
+    document.body.appendChild(reactUi);
+    let defaultReactions = ["❤️", "😂", "👍", "👎", "❕", "❔"];
+console.log(defaultReactions);
+
+const currentUsername = username;
+
+const targetMessageId = "m" + _thisBubble.target.____MID;
+const targetMessageObject = msg.messages[targetMessageId];
+
+const userExistingReaction = targetMessageObject.reactions 
+    ? targetMessageObject.reactions[currentUsername] 
+    : undefined;
+
+for (const emoji of defaultReactions) {
+    let btn = document.createElement("button");
+    btn.innerText = emoji;
+    btn.classList.add("reactBtn");
+
+    if (userExistingReaction === emoji) {
+        btn.classList.add("reactSelected"); 
+    }
+
+    btn.onclick = (_thisButton) => {
+        const messageObject = targetMessageObject; 
+
+        if (!messageObject.reactions) {
+            messageObject.reactions = {};
+        }
+
+        const currentReaction = messageObject.reactions[currentUsername];
+        
+        if (currentReaction === emoji) {
+            delete messageObject.reactions[currentUsername];
+        } else {
+            messageObject.reactions[currentUsername] = emoji; 
+        }
+
+        edit(_thisBubble.target.____MID, "reactions", messageObject.reactions);
+        document.body.removeChild(reactUi);
+    };
+
+    reactUi.appendChild(btn);
+}
+  }
+  bubble.innerText = sender.message
+  document.querySelector("#messages").appendChild(bubble)
+  if (!sender.sender.user.includes(username)) {
+    var nameplate = document.createElement("span");
+    nameplate.innerText = sender.sender.user + ", " + sender.sender.time;
+    nameplate.style = `
+      position: absolute;
+      font-size: 9px;
+      top: -10px;
+      left: 5px;
+      white-space: nowrap;
+    `
+    bubble.appendChild(nameplate);
+  }
+
+  if (!!sender.reactions && Object.keys(sender.reactions).length > 0) {
+      const reactionsArray = Object.values(sender.reactions);
+      const reactionsString = reactionsArray.join(' '); 
+
+      var reaction = document.createElement("span");
+      reaction.innerText = reactionsString; 
+      reaction.style = `
+      position: absolute;
+      left: ${bubble.offsetWidth}px; /* Using offsetWidth is safer than bubble.width */
+      white-space: nowrap;
+      top: -10px;
+      background: #262529;
+      border-radius: 9px;
+      border: 1px solid white;
+      padding: 1px 4px; /* Added padding for better appearance */
+      `;
+      bubble.appendChild(reaction);
+  }
+
+}
+let b = document.createElement("div");
+b.style = `
+    position: absolute;
+    top: ${70*(Object.keys(msg.messages).length)+90}px;
+    width: 70%;
+    height: 40px;
+    border: none;
+  `
+document.querySelector("#messages").appendChild(b)
+
+window.scrollTo({top: scrollWhy})
+}
+
+/*let names = ["OG GC","Jacob+Tudor","AJB","Coker","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed","Unnamed"]
+
+
+passes2 = [btoa("CHAT"),btoa("Tudor"),btoa("AJB"),btoa("Coker"),"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""]
+let new150 = {
+passwords: [passes2],
+names: [names]
+}
+url = "https://retoolapi.dev/09OX6R/messages/150"
+api("put",new150)  //*/
+
+
+setInterval(e=>{
+let button = document.querySelector("#sendBtn")
+if (document.querySelector("input").value == "") {
+  button.style.background = "#262529";
+  button.style.color = "#666"
+  button.style.cursor = "default"
+} else {
+  button.style.background = "#1584ff";
+  button.style.color = "white";
+  button.style.cursor = "pointer"
+}
+},20)
+
+
+api()
+setInterval(api,1000)
+setInterval(updateTexts,1000)
+setInterval(updatePasses,1000);</script><style>input#type {
+position: fixed;
+bottom: 20px;
+height: 40px;
+left: 140px;
+width: calc(100% - 225px);
+border-radius: 12px;
+background: #262529;
+border: 1px solid #7c7c7c;
+color: white;
+padding-left: 8px;
+}
+button.reactBtn {
+  width: 33px;
+  height: 33px;
+  text-align: center;
+  background: #262529;
+  border-radius: 9px;
+  border: 1px solid #7c7c7c;
+  cursor: pointer;
+  padding: 0px 4px 0px 4px;
+}
+button.reactBtn:hover {
+  background: #363539;
+}
+.reactSelected {
+  background: #1584ff !important;
+}
+button#nameBtn {
+position: fixed;
+top: 10px;
+right: 10px;
+color: white;
+background: black;
+border: 1px solid white;
+}
+button.chatbtn {
+display: inline-block;
+width: 75px;
+height: 20px;
+color: white;
+background: black;
+padding: 0px 0px 0px 0px;
+margin: 0px 0px 0px 0px;
+border: none;
+cursor: pointer
+}
+button.chatbtn:hover {
+background: #222;
+}
+div#chats {
+position: fixed;
+left: 0px;
+top: 0px;
+border-top: none;
+border-left: none;
+border-bottom: none;
+border-right: 5px solid gray;
+border-radius: 0px;
+width: 100px;
+height: 100%;
+overflow-y: scroll;
+}
+button#sendBtn {
+position: fixed; /* Changed from absolute to fixed */
+bottom: 20px;
+height: 40px;
+right: 10px;
+width: 60px;
+border: 1px solid #7c7c7c;
+border-radius: 12px;
+background: #262529;
+color: #666;
+transition: .2s;
+cursor: default;
+font-size: 21px;
+}
+.nameplated {
+position: relative;
+padding-top: 15px;
+}
+.nameplated::after {
+position: absolute; 
+z-index: 100;
+left: 5px;
+top: -15px; 
+background-color: #333;
+color: white;
+padding: 1px 5px;
+border-radius: 4px;
+font-size: 10px;
+white-space: nowrap;
+}
+body {
+background: black;
+color: white
+}
+* {
+font-family: Arial;
+}
+div {
+padding: 8px;
+border-radius: 10px;
+--nameplateText: "";
+}</style>
