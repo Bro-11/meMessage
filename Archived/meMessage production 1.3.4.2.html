@@ -1,0 +1,511 @@
+<title>meMessage</title>
+<link rel="icon" href="data:image/webp;base64,UklGRnABAABXRUJQVlA4WAoAAAAQAAAADwAADwAAQUxQSGMAAAABcFzbtpr8eCpKCcGhASrQKR24w8jd3d29KbfbQkRMAKE1sep4OhkNm7moniF0+nF//NlkpAco2xG/Ayl6kW4AmQQft/8WwQc4h2ZYABm7kJIBsfHD/4YcEU3N/fn6uS4ZOQIAVlA4IOYAAADwAwCdASoQABAAAIAOJbACdLcAUIBz0XsQkqL8Xz1VBwrnAASRObukAP763tFhdTh/zPdUeP+a4AX5Bh1r8D7cunhn6x+RMUCzeN3xfQ23Ls9whhxS6VjLm7g0dobIGy0L+m9I3cre9/Gwhu6js+wexar/625kgd2MDtLleXmIWjwh5T+eOQFev1UEYzFEsZMwAJXTrsKbTao/xPb+lxYIc538Zfd2Xuj8bxn+af8e7zCX+sv2JgCf//h/tbatAOud//29+/V9xxQ4QX/q/4GkzDmPb/7gZYE86w3/zcMRmnNE4AAAAA==">
+<center>
+    <h1 id="title">
+      Loading...
+    </h1>
+  </center>
+  <div id="messages"></div>
+  <div id="chats">
+    
+  </div>
+  <input id="type" type="text" placeholder="new meMessage..." maxlength="200"/>
+  <button id="sendBtn" onclick="send()">
+  <svg width="17px" height="17px" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
+    <path d="M32 4V60M32 4L8 28M32 4L56 28" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+  <button id="nameBtn" onclick="changeName()">Change Chat Name</button><script>
+var url = `https://retoolapi.dev/09OX6R/messages/5`;
+var max = 0;
+var lastDataHash = "";
+
+if (!localStorage.meMsgUser || localStorage.meMsgUser == "null") {
+  localStorage.meMsgUser = prompt("Enter your first name...  (This is your display username, you cannot change it once it is set!)");
+  window.location.reload();
+}
+
+var username = localStorage.meMsgUser;
+var passes;
+var chatDiv = document.querySelector("#chats");
+
+async function init() {
+  await updatePasses();
+  for (var i = 1; i <= 149; i++) {
+    let enterChatBtn = document.createElement("button");
+    enterChatBtn.setAttribute("number", i);
+    enterChatBtn.onclick = e => {
+      promptEntering(e.target.getAttribute("number"));
+    }
+    enterChatBtn.classList.add("chatbtn");
+    enterChatBtn.innerText = passes.names.toString().split(",")[i - 1];
+    chatDiv.appendChild(enterChatBtn);
+  }
+  await api("get");
+  updateTexts();
+}
+
+var msg = { messages: {} }
+var O = {}
+
+async function api(changeType = "get", change = {}) {
+  if (changeType == "put") {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(change)
+    });
+    const data = await response.json();
+    msg = data;
+    lastDataHash = JSON.stringify(data.messages);
+  } else if (changeType == "get") {
+    const response = await fetch(url);
+    const data = await response.json();
+    O = data;
+    msg = data;
+    
+    let currentHash = JSON.stringify(data.messages);
+    if (currentHash !== lastDataHash) {
+        lastDataHash = currentHash;
+        updateTexts();
+    }
+  }
+  
+  if (changeType == "add") {
+    O = addMessage(change);
+    await api("put", O);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+}
+
+async function updatePasses() {
+  const r = await fetch("https://retoolapi.dev/09OX6R/messages/150");
+  passes = await r.json();
+}
+
+function promptEntering(num) {
+  if (localStorage["enteredChat" + num] !== "yes") {
+    let pasio = passes.passwords.toString().split(",")[num - 1];
+    let pass;
+    if (pasio !== "") {
+      pass = btoa(prompt("Enter password..."));
+    } else {
+      pass = "";
+    }
+    if (pasio == pass) {
+      url = "https://retoolapi.dev/09OX6R/messages/" + num;
+      localStorage["enteredChat" + num] = "yes";
+      lastDataHash = ""; // Force redraw
+      api("get");
+    }
+  } else {
+    url = "https://retoolapi.dev/09OX6R/messages/" + num;
+    lastDataHash = ""; // Force redraw
+    api("get");
+  }
+}
+
+function addMessage(newMessage, targetObject = msg) {
+  if (typeof targetObject !== 'object' || targetObject === null || !targetObject.messages) {
+    targetObject = { messages: {} };
+  }
+  const messages = targetObject.messages;
+  const existingKeys = Object.keys(messages);
+  let maxIndex = 0;
+  for (const key of existingKeys) {
+    const index = parseInt(key.substring(1));
+    if (index > maxIndex) maxIndex = index;
+  }
+  const newKey = `m${maxIndex + 1}`;
+  const currentMessages = typeof targetObject.messages === 'object' && targetObject.messages !== null ? targetObject.messages : {};
+  const newMessages = { ...currentMessages, [newKey]: newMessage };
+  return { ...targetObject, messages: newMessages };
+}
+
+const updatedMessages = {
+  messages: {
+    m1: {
+      sender: { user: "Server", time: "0:00 AM" },
+      message: "Chat reset by server admin"
+    }
+  }
+};
+
+async function reset() {
+  let resetStrings = [
+    "by Google Gemini", "by ChatGPT", "because the devs broke smth", "because geese broke into your house", "becuase the APs found you", "because your computer got isolated for going on furry dating websites", "by the Hollow Knight", "by Hornet", "by Jeffrey Epstein", "because Nintendo's suing us twin 🥀", "by a flock of ferocious furry femboys", "because a wild NullReferenceException appeared", "because your CPU ran out of elixir", "because nobody would join Jarred in Kart Bros", "by \"Uncaught TypeError: Cannot read properties of undefined (reading 'reset')\"", "by sneaky golem in the pocket", "by Clippy", "by evo skelly nike pro", "bc ur chopped twin 🥀😭😭🙏"
+  ];
+  let resetStr = "Chat reset " + resetStrings[Math.floor(Math.random() * resetStrings.length)];
+  updatedMessages.messages.m1.message = resetStr;
+  await api("put", updatedMessages);
+}
+
+async function resetAll() {
+  for (var i = 123; i < 150; i++) {
+    url = "https://retoolapi.dev/09OX6R/messages/" + i;
+    await reset();
+  }
+}
+
+function getTime() {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes} ${ampm}`;
+}
+
+function send() {
+  if (document.querySelector("input").value !== "") {
+    api("add", { sender: { user: username, time: getTime() }, message: document.querySelector("input").value });
+    document.querySelector("input").value = "";
+    let button = document.querySelector("#sendBtn");
+    button.style.background = "#262529";
+    button.style.color = "#666";
+    button.style.cursor = "not-allowed";
+    setTimeout(() => { window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }); }, 1100);
+  }
+}
+
+document.onkeypress = e => { if (e.key == "Enter") { send() } };
+
+async function changeName() {
+  let num = Number(url.split("messages/")[1]);
+  let newName = prompt("Enter new chat name...  (Max length 16 characters, click cancel or press escape to return)");
+  if (newName != null && newName != "") {
+    newName = newName.substring(0, 16);
+    let newNames = passes.names.toString().split(",");
+    newNames[num - 1] = newName;
+    let new150 = { names: [newNames], passwords: [passes.passwords] };
+    let preUrl = url;
+    url = "https://retoolapi.dev/09OX6R/messages/150";
+    await api("put", new150);
+    url = preUrl;
+    location.reload();
+  }
+}
+
+function edit(messageIndex, editType, editData) {
+  let messageToEdit = msg.messages["m" + messageIndex];
+  if (editType == "all") messageToEdit = editData;
+  if (editType == "message") messageToEdit.message = editData;
+  if (editType == "time") messageToEdit.sender.time = editData;
+  if (editType == "user") messageToEdit.sender.user = editData;
+  if (editType == "reactions") messageToEdit.reactions = editData;
+  msg.messages["m" + messageIndex] = messageToEdit;
+  api("put", msg);
+  updateTexts();
+}
+
+function updateTexts() {
+  console.log("Refreshed!");
+  if (!msg || !msg.messages) return;
+  let scrollWhy = window.scrollY;
+  let chatNum = parseInt(url.split("messages/")[1]);
+  let chatBtns = chatDiv.querySelectorAll("button");
+  if (chatBtns[chatNum - 1]) {
+    document.querySelector("h1").innerText = chatBtns[chatNum - 1].innerText;
+  }
+
+  document.querySelector("#messages").innerHTML = "";
+  for (var i = 0; i < Object.keys(msg.messages).length; i++) {
+    let bubble = document.createElement("div");
+    bubble.____MID = i + 1;
+    let sender = msg.messages["m" + (i + 1)];
+    if (!sender) continue;
+    bubble.style = `
+    position: absolute;
+    top: ${70 * i + 100}px;
+    ${sender.sender.user == username ? ("right: 50px;") : ("left: 130px;")}
+    background: ${sender.sender.user == username ? ("#1584ff") : "#262529"};
+    color: white;
+    min-height: 40px; 
+    border: 1px solid black;
+    display: inline-block;
+    min-width: 35px;
+    max-width: 75%;
+    overflow-wrap: break-word;
+    cursor: default;
+  `;
+    bubble.oncontextmenu = _thisBubble => {
+      try { sender = msg.messages["m" + _thisBubble.target.____MID].sender; }
+      catch { return; }
+      _thisBubble.preventDefault();
+      var reactUi = document.createElement("div");
+      reactUi.style = `
+      position: fixed;
+      bottom: 20px;
+      height: 40px;
+      left: 140px;
+      width: calc(100% - 225px);
+      border-radius: 12px;
+      background: #262529;
+      border: 1px solid #7c7c7c;
+      color: white;
+      z-index: 10001;
+      padding-left: 8px;
+    `;
+      document.body.appendChild(reactUi);
+      let blackness = document.createElement("div");
+      blackness.addEventListener("click", () => { document.body.removeChild(reactUi) });
+      blackness.style = `position: absolute; left: -10000px; top: -10000px; width: 30000px; height: 30000px; background: #0008; z-index: -100;`;
+      reactUi.appendChild(blackness);
+
+      if (msg.messages["m" + _thisBubble.target.____MID].sender.user == username) {
+        let editBtn = document.createElement("button");
+        editBtn.onclick = e => {
+          let currentMsg = msg.messages["m" + _thisBubble.target.____MID].message;
+          let editValue = Array.isArray(currentMsg) ? currentMsg[0] : currentMsg;
+          let newMsg = prompt("Enter edited message", editValue);
+	  updateTexts();
+          if (newMsg != null && newMsg.trim() != "") {
+            edit(_thisBubble.target.____MID, "message", newMsg);
+            document.body.removeChild(reactUi);
+          }
+	  
+        };
+        editBtn.classList.add("editBtn");
+        editBtn.innerText = "Edit Message";
+        reactUi.appendChild(editBtn);
+      }
+
+      let defaultReactions = ["❤️", "😂", "👍", "👎", "❕", "❔", "🐐", "😮", "😡", "😝", "🤑", "🤔", "😭", "🥀", "💀", "☹️", "🔥", "🎉", "🙏", "🖕", "🫦", "🥷", "👯‍♀️", "🤹‍♂️", "👨‍❤️‍💋‍👨", "🦲", "🍆", "🍒", "🧊", "🕋", "🌈", "⚡", "⛄", "🧢", "📎"];
+      const currentUsername = username;
+      const targetMessageId = "m" + _thisBubble.target.____MID;
+      const targetMessageObject = msg.messages[targetMessageId];
+      const userExistingReaction = targetMessageObject.reactions ? targetMessageObject.reactions[currentUsername] : undefined;
+
+      for (const emoji of defaultReactions) {
+        let btn = document.createElement("button");
+        btn.innerText = emoji;
+        btn.classList.add("reactBtn");
+        if (userExistingReaction === emoji) { btn.classList.add("reactSelected"); }
+        btn.onclick = () => {
+          const messageObject = targetMessageObject;
+          if (!messageObject.reactions) { messageObject.reactions = {}; }
+          if (messageObject.reactions[currentUsername] === emoji) {
+            delete messageObject.reactions[currentUsername];
+          } else {
+            messageObject.reactions[currentUsername] = emoji;
+          }
+          edit(_thisBubble.target.____MID, "reactions", messageObject.reactions);
+          document.body.removeChild(reactUi);
+        };
+        reactUi.appendChild(btn);
+        document.onkeydown = e => e.key == "Escape" ? document.body.removeChild(reactUi) : 0;
+      }
+    };
+
+    let messageText = Array.isArray(sender.message) ? sender.message[0] : sender.message;
+    const urlRegex = /(\b(https?:\/\/[^\s]+|www\.[^\s]+)(\b|$))/g;
+    let linkedMessageText = messageText.replace(urlRegex, (match) => {
+      let url = match;
+      if (url.startsWith('www.')) { url = 'http://' + url; }
+      return `<a href="${url}" target="_blank" style="color: white; text-decoration: underline;">${match}</a>`;
+    });
+
+    bubble.innerHTML = linkedMessageText;
+    document.querySelector("#messages").appendChild(bubble);
+
+    if (sender.sender.user != username) {
+      var nameplate = document.createElement("span");
+      nameplate.innerText = sender.sender.user + ", " + sender.sender.time;
+      nameplate.style = `position: absolute; font-size: 9px; top: -10px; left: 5px; white-space: nowrap; z-index: 9000000000000000;`;
+      bubble.appendChild(nameplate);
+    }
+
+    if (!!sender.reactions && Object.keys(sender.reactions).length > 0) {
+      let reactionsHTML = "";
+      for (var j in sender.reactions) {
+        if (j == username) reactionsHTML += " <span class='myReact'>" + sender.reactions[j] + "</span>";
+        else reactionsHTML += " " + sender.reactions[j];
+      }
+      var reaction = document.createElement("span");
+      reaction.innerHTML = reactionsHTML;
+      reaction.style = `
+      position: absolute;
+      ${sender.sender.user == username ? ("right") : "left"}: ${bubble.offsetWidth - 7.5}px; 
+      white-space: nowrap;
+      top: -10px;
+      background: #262529;
+      border-radius: 9px;
+      border: 1px solid white;
+      padding: 1px 4px;
+      `;
+      bubble.appendChild(reaction);
+    }
+  }
+
+  let b = document.createElement("div");
+  b.style = `position: absolute; top: ${70 * (Object.keys(msg.messages).length) + 100}px; width: 70%; height: 40px; border: none;`;
+  document.querySelector("#messages").appendChild(b);
+  window.scrollTo({ top: scrollWhy });
+}
+
+setInterval(() => {
+  let button = document.querySelector("#sendBtn");
+  let input = document.querySelector("input");
+  if (input.value == "") {
+    button.style.background = "#262529";
+    button.style.color = "#666";
+    button.style.cursor = "not-allowed";
+  } else {
+    button.style.background = "#1584ff";
+    button.style.color = "white";
+    button.style.cursor = "pointer";
+  }
+}, 50);
+
+init();
+setInterval(() => api("get"), 1500);
+setInterval(updatePasses, 5000);
+</script><style>input#type {
+position: fixed;
+bottom: 20px;
+height: 40px;
+left: 140px;
+width: calc(100% - 205px);
+border-radius: 12px;
+background: #262529;
+border: 1px solid #7c7c7c;
+color: white;
+padding-left: 8px;
+}
+.editBtn {
+  position: absolute;
+  top: -30px;
+  left: 8.3px;
+  background: #262529;
+  color: white;
+  border: 1px solid #7c7c7c;
+  border-radius: 7px;
+  height: auto;
+  font-size: 16px;
+  padding: 5px 5px 5px 5px;
+  cursor: pointer;
+}
+.editBtn:hover {
+  background: #323538;
+}
+h1 {
+  background: #181818;
+  padding: 6px 10px 6px 10px;
+  border-radius: 10px;
+  display: inline-block;
+  height: 37px;
+  border: 1px solid #282828;
+  cursor: default;
+}
+button.reactBtn {
+  width: 33px;
+  height: 33px;
+  text-align: center;
+  background: #262529;
+  border-radius: 9px;
+  border: 1px solid #7c7c7c;
+  cursor: pointer;
+  padding: 0px 4px 0px 4px;
+  z-index: 10000001;
+  margin-right: 4px;
+}
+button.reactBtn:hover {
+  background: #363539;
+}
+.reactSelected {
+  background: #1584ff !important;
+}
+button#nameBtn {
+position: fixed;
+top: 10px;
+right: 10px;
+color: white;
+background: black;
+border: 1px solid white;
+border-radius: 6px;
+}
+button#nameBtn:hover {
+  background: #282828;
+  cursor: pointer;
+}
+button.chatbtn {
+display: inline-block;
+width: 75px;
+height: auto;
+color: white;
+background: black;
+cursor: pointer;
+font-size: 12px;
+border: 1px solid #282828;
+border-radius: 6px;
+padding: 3px 0px 3px 0px;
+margin: 0px 0px 4px 0px;
+white-space: normal;
+word-wrap: break-word;
+overflow-wrap: break-word;
+}
+button.chatbtn:hover {
+background: #222;
+}
+div#chats {
+position: fixed;
+left: 0px;
+top: 0px;
+border-top: none;
+border-left: none;
+border-bottom: none;
+border-right: 5px solid gray;
+border-radius: 0px;
+width: 100px;
+height: 100%;
+overflow-y: scroll;
+}
+button#sendBtn {
+position: fixed; 
+bottom: 20px;
+height: 40px;
+right: 10px;
+width: 40px;
+border: 1px solid #7c7c7c;
+border-radius: 121px;
+background: #262529;
+color: #666;
+transition: .2s;
+cursor: default;
+font-size: 17px;
+padding-top: 5px;
+}
+span.myReact {
+  background: #1584ff;
+  border-radius: 5px;
+  display: inline-block;
+  height: 21px;
+}
+.nameplated {
+position: relative;
+padding-top: 15px;
+}
+.nameplated::after {
+position: absolute; 
+z-index: 100;
+left: 5px;
+top: -15px; 
+background-color: #333;
+color: white;
+padding: 1px 5px;
+border-radius: 4px;
+font-size: 10px;
+white-space: nowrap;
+}
+body {
+background: black;
+color: white
+}
+* {
+font-family: Arial;
+}
+div {
+padding: 8px;
+border-radius: 10px;
+--nameplateText: "";
+}</style>
